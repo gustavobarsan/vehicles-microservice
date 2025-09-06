@@ -1,8 +1,32 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/vehicles-microservice/src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/vehicles-microservice/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/vehicles-microservice",
+  "projects": {
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "vehicles-microservice": {
+      "type": "application",
+      "root": "apps/vehicles-microservice",
+      "entryFile": "main",
+      "sourceRoot": "apps/vehicles-microservice/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/vehicles-microservice/tsconfig.app.json"
+      }
+    }
   }
 }
