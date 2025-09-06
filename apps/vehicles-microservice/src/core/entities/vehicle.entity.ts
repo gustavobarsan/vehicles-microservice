@@ -1,5 +1,5 @@
 export class Vehicle {
-  id: string;
+  id?: string;
   plate: string;
   chassis: string;
   renavam: string;
@@ -7,8 +7,8 @@ export class Vehicle {
   brand: string;
   year: number;
   color: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 
   constructor(props: Partial<Vehicle>) {
     Object.assign(this, props);
