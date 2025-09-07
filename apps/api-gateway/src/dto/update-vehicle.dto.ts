@@ -1,31 +1,5 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { CreateVehicleDto } from './create-vehicle.dto';
 
-export class UpdateVehicleDto {
-  @IsOptional()
-  @IsString()
-  plate?: string;
+export class UpdateVehicleDto extends PartialType(CreateVehicleDto) {}
 
-  @IsOptional()
-  @IsString()
-  chassis?: string;
-
-  @IsOptional()
-  @IsString()
-  renavam?: string;
-
-  @IsOptional()
-  @IsString()
-  model?: string;
-
-  @IsOptional()
-  @IsString()
-  brand?: string;
-
-  @IsOptional()
-  @IsNumber()
-  year?: number;
-
-  @IsOptional()
-  @IsString()
-  color?: string;
-}
