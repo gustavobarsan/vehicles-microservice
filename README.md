@@ -1,98 +1,134 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# API de Gerenciamento de Veículos (Microsserviço)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 1. Introdução
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este documento descreve a API de Gerenciamento de Veículos. O objetivo do sistema é fornecer uma plataforma robusta e escalável para realizar o cadastro e a consulta de veículos, utilizando uma arquitetura de microsserviços.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 2. Arquitetura e Padrões
 
-## Project setup
+O projeto foi desenvolvido seguindo os princípios da **Arquitetura de Microsserviços** e da **Arquitetura Hexagonal (Ports & Adapters)**.
 
-```bash
-$ npm install
-```
+### 2.1. Microsserviços
 
-## Compile and run the project
+A aplicação é dividida em dois serviços principais:
 
-```bash
-# development
-$ npm run start
+*   **`api-gateway`**: É o ponto de entrada (edge service) da aplicação. Ele recebe as requisições HTTP, atua como um cliente para a fila de mensagens e encaminha as solicitações para o microsserviço apropriado.
+*   **`vehicles-microservice`**: Contém toda a lógica de negócio para o gerenciamento de veículos. Ele é completamente agnóstico ao protocolo de entrada (HTTP, por exemplo) e se comunica com o mundo exterior através de mensagens.
 
-# watch mode
-$ npm run start:dev
+### 2.2. Comunicação Assíncrona com RabbitMQ
 
-# production mode
-$ npm run start:prod
-```
+A comunicação entre o `api-gateway` e o `vehicles-microservice` é feita de forma assíncrona utilizando o **RabbitMQ** como message broker. Isso garante desacoplamento e maior escalabilidade entre os serviços.
 
-## Run tests
+### 2.3. Arquitetura Hexagonal no `vehicles-microservice`
 
-```bash
-# unit tests
-$ npm run test
+O microsserviço de veículos é estruturado da seguinte forma:
 
-# e2e tests
-$ npm run test:e2e
+*   **Core (Domínio):** Contém as entidades (`Vehicle`), os casos de uso (`VehiclesUseCases`) e as abstrações dos repositórios (`VehiclesRepository`). É o coração da aplicação, totalmente isolado de frameworks e tecnologias externas.
+*   **Adaptadores (Adapters):**
+    *   **Infraestrutura:** Implementações concretas para interagir com tecnologias externas, como o `PrismaVehiclesRepository` que se comunica com o banco de dados PostgreSQL.
+    *   **Nest Adapters:** Camada que adapta o *core* para o framework NestJS, recebendo as mensagens do RabbitMQ e orquestrando as chamadas para os casos de uso.
 
-# test coverage
-$ npm run test:cov
-```
+---
 
-## Deployment
+## 3. Débito Técnico: Ausência de Testes
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+O projeto possui uma suíte de testes unitários focada nos casos de uso, garantindo a correta implementação da lógica de negócio principal.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+No entanto, é importante ressaltar o débito técnico relacionado à **ausência de testes de integração e ponta-a-ponta (e2e)**. A criação desses testes é um próximo passo crucial para garantir a robustez e a correta comunicação entre os microsserviços e com as camadas de infraestrutura (banco de dados, mensageria).
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+---
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 4. Documentação da API (Swagger)
 
-## Resources
+A API está documentada utilizando o padrão OpenAPI (Swagger). Após iniciar a aplicação, a documentação interativa fica disponível e é a melhor forma de explorar os endpoints, seus parâmetros, e os schemas de requisição e resposta.
 
-Check out a few resources that may come in handy when working with NestJS:
+*   **URL do Swagger:** http://localhost:3000/api
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 5. Guia de Início Rápido (Get Started)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Siga os passos abaixo para executar o projeto em seu ambiente.
 
-## Stay in touch
+### 5.1. Pré-requisitos
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+*   Node.js (versão 18 ou superior)
+*   Yarn ou NPM
+*   Docker e Docker Compose
 
-## License
+### 5.2. Executando com Docker Compose (Recomendado)
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Esta é a forma mais simples de executar o projeto, pois o Docker Compose gerencia o banco de dados, o message broker e as aplicações.
+
+1.  **Clone o repositório:**
+    ```bash
+    git clone <url-do-repositorio>
+    cd vehicles-microservice
+    ```
+
+2.  **Configure as variáveis de ambiente:**
+    *   Crie uma cópia do arquivo `.env.example` e renomeie para `.env`.
+    *   As variáveis no `.env` já estão configuradas para a comunicação entre os containers.
+
+3.  **Inicie os containers:**
+    *   Este comando irá construir as imagens (se necessário) e iniciar os containers da API, do microsserviço, do PostgreSQL e do RabbitMQ em background (`-d`).
+    ```bash
+    docker-compose up -d --build
+    ```
+    *   As migrações do banco de dados (`Prisma`) serão executadas automaticamente ao iniciar o container do `vehicles-microservice`.
+
+4.  **Acesse a API:**
+    *   A API estará disponível em `http://localhost:3000`.
+    *   A documentação Swagger estará em `http://localhost:3000/api`.
+    *   O painel de gerenciamento do RabbitMQ estará em `http://localhost:15672`.
+
+5.  **Para parar os containers:**
+    ```bash
+    docker-compose down
+    ```
+
+### 5.3. Executando Localmente
+
+1.  **Clone o repositório** (se ainda não o fez).
+
+2.  **Inicie a infraestrutura (Postgres e RabbitMQ):**
+    *   Você pode usar o Docker para subir apenas os serviços de infraestrutura:
+    ```bash
+    docker-compose up -d postgres rabbitmq
+    ```
+
+3.  **Instale as dependências:**
+    ```bash
+    npm install
+    # ou
+    yarn install
+    ```
+
+4.  **Configure as variáveis de ambiente:**
+    *   Crie uma cópia do arquivo `.env.example` e renomeie para `.env`.
+    *   Assegure que a variável `DATABASE_URL` aponta para sua instância local do PostgreSQL.
+
+5.  **Execute as migrações do banco de dados:**
+    *   Este comando irá criar as tabelas no banco de dados com base no `schema.prisma`.
+    ```bash
+    npx prisma migrate dev
+    ```
+
+6.  **Inicie as aplicações:**
+    *   Abra dois terminais separados.
+    *   No primeiro, inicie o microsserviço de veículos:
+        ```bash
+        npm run start:dev vehicles-microservice
+        ```
+    *   No segundo, inicie o API Gateway:
+        ```bash
+        npm run start:dev api-gateway
+        ```
+
+7.  **Acesse a API:**
+    *   A API estará disponível em `http://localhost:3000`.
+
+---
+
