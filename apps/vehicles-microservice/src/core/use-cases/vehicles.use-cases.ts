@@ -25,7 +25,7 @@ export class VehiclesUseCases {
     }
 
     try {
-      return await this.repository.create(data);
+      return await this.repository.create(data as Omit<Vehicle, 'id'>);
     } catch (error) {
       throw new UnexpectedError('Ocorreu um erro ao criar o veículo.');
     }
