@@ -7,12 +7,4 @@ export class Vehicle {
   brand: string;
   year: number;
   color: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-
-  constructor(props: Partial<Vehicle>) {
-    Object.assign(this, props);
-    if (!this.createdAt) this.createdAt = new Date();
-    this.updatedAt = new Date();
-  }
 }
