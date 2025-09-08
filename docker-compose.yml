@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -9,5 +9,64 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     volumes:
-      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_log:/var/log/rabbitmq
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: vehicles_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: vehiclesdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network        
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: api-gateway    
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    networks:
+      - app-network
+
+  vehicles-microservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: vehicles-microservice      
+    command: sh -c "npx prisma migrate deploy && node dist/main.js"
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672   
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+  rabbitmq_log:
+  postgres_data:
