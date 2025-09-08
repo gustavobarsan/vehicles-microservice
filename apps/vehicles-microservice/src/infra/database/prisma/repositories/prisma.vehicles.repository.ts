@@ -7,7 +7,7 @@ import { Vehicle } from 'apps/vehicles-microservice/src/core/entities/vehicle.en
 export class PrismaVehiclesRepository implements VehiclesRepository {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: Partial<Vehicle>): Promise<Vehicle> {
+  async create(data: Omit<Vehicle, 'id'>): Promise<Vehicle> {
     const createdVehicle = await this.prisma.vehicle.create({ data });
     return createdVehicle as Vehicle;
   }
